@@ -1,0 +1,13 @@
+# Local-only tooling, IDE config, and ad-hoc npm noise.
+# These are NOT part of the public skill and should never be published.
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+.agents/
+.claude/
+.codex/
+.idea/
+.trellis/
+package.json
+package-lock.json
