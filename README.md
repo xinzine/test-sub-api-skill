@@ -1,113 +1,178 @@
 # test-sub-api
 
-交互式测试 API 中转站（OpenAI 格式或 Anthropic 格式）是否可用，输出结构化结果（状态 / 模式 / 模型 / 首字 ms / 总用时 ms / 响应内容；失败时附错误信息）。
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
+[![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![中文文档](https://img.shields.io/badge/docs-中文文档-blue)](./README.zh-CN.md)
 
-## 功能
+An interactive CLI tool for testing the availability of API relays (OpenAI or Anthropic format). Produces structured JSON output including status, mode, model, first-token latency (ms), total duration (ms), and response text. On failure, an error message is included.
 
-- 拉模型列表：支持 OpenAI 与 Anthropic 两种格式的中转站。
-- 流式对话测试：对中转站发起一次真实的 streaming chat 请求。
-- 首字耗时统计：基于 OpenAI 的 `delta.content` 或 Anthropic 的 `content_block_delta.text` 计算首个可见 token 的到达时间。
-- 默认 60 秒超时，可通过 `--timeout-ms` 覆盖。
-- stdout 仅输出 JSON，便于上游程序直接解析。
-- 失败时退出码非 0，便于在脚本中判定。
+## Features
 
-## 目录结构
+- **List models** — Supports both OpenAI and Anthropic API relay formats.
+- **Streaming chat test** — Sends a single streaming chat request to the relay.
+- **First-token latency** — Measures time to the first visible token via OpenAI's `delta.content` or Anthropic's `content_block_delta.text`.
+- **Configurable timeout** — Default 60 seconds, overridable via `--timeout-ms`.
+- **JSON-only stdout** — Designed for programmatic consumption by upstream tools.
+- **Non-zero exit on failure** — Easy to check in shell scripts.
+
+## Directory Structure
 
 ```text
 SKILL.md
 README.md
+README.zh-CN.md
 scripts/
   openai-list-models.js
   openai-stream-chat.js
   anthropic-list-models.js
   anthropic-stream-chat.js
+  cc-switch-import-url.js
   lib/
     cli.js
     http.js
     sse.js
     result.js
+references/
+  cc-switch-import.md
 ```
 
-## 安装
+## Installation
 
-发布到 GitHub 后，将 `<owner>/<repo>` 替换为真实仓库名：
+The repository is published on GitHub and can be installed via `npx skills add`:
 
 ```bash
-npx skills add <owner>/<repo>
+npx skills add xinzine/test-sub-api-skill
 ```
 
-也可以显式指定技能名：
+Or use the full GitHub URL:
 
 ```bash
-npx skills add <owner>/<repo> --skill test-sub-api
+npx skills add https://github.com/xinzine/test-sub-api-skill
 ```
 
-## 本地验证
+To list installable skills in the repository:
 
-在仓库根目录执行：
+```bash
+npx skills add xinzine/test-sub-api-skill --list
+```
+
+To explicitly specify the skill name:
+
+```bash
+npx skills add xinzine/test-sub-api-skill --skill test-sub-api
+```
+
+In automated environments, add `--yes` to skip confirmation:
+
+```bash
+npx skills add xinzine/test-sub-api-skill --skill test-sub-api --yes
+```
+
+## Local Verification
+
+Run from the repository root:
 
 ```bash
 npx skills add . --list
 ```
 
-如果输出里能看到 `test-sub-api`，说明仓库结构可被 CLI 识别。
+If `test-sub-api` appears in the output, the repository structure is recognized by the CLI.
 
-## 脚本独立调用
+You can also verify against the remote repository:
 
-以下命令均直接通过 `node` 调用，无需安装依赖。请将 `<baseUrl>`、`<apiKey>`、`<model>` 替换成中转站实际值。
+```bash
+npx skills add xinzine/test-sub-api-skill --list
+```
 
-OpenAI 格式 - 拉模型列表：
+If remote verification fails with a GitHub connection error, check your network
+or proxy first; the error does not mean the repository structure is invalid.
+
+## Standalone Script Usage
+
+All commands are invoked directly with `node` — no dependency installation required.
+Replace `<baseUrl>`, `<apiKey>`, and `<model>` with your actual relay values.
+
+### OpenAI
+
+**List models:**
 
 ```bash
 node scripts/openai-list-models.js --base-url "<baseUrl>" --api-key "<apiKey>"
 ```
 
-OpenAI 格式 - 流式对话测试：
+**Streaming chat test:**
 
 ```bash
 node scripts/openai-stream-chat.js --base-url "<baseUrl>" --api-key "<apiKey>" --model "<model>"
 ```
 
-Anthropic 格式 - 拉模型列表：
+### Anthropic
+
+**List models:**
 
 ```bash
 node scripts/anthropic-list-models.js --base-url "<baseUrl>" --api-key "<apiKey>"
 ```
 
-Anthropic 格式 - 流式对话测试：
+**Streaming chat test:**
 
 ```bash
 node scripts/anthropic-stream-chat.js --base-url "<baseUrl>" --api-key "<apiKey>" --model "<model>"
 ```
 
-可选参数：
+### cc-switch
 
-- `--message`：自定义测试用的用户输入文本。
-- `--timeout-ms`：覆盖默认的 60000 ms 超时。
-- Anthropic 流式对话脚本还额外支持 `--max-tokens` 与 `--anthropic-version`。
+**Generate provider import link:**
 
-## 输出格式
+```bash
+node scripts/cc-switch-import-url.js --app codex --name "test-sub-api-skill" --endpoint "<endpoint>" --api-key "<apiKey>" --model "<model>" --open
+```
 
-成功时 stdout 是一个 JSON 对象，包含以下字段：
+### Optional Parameters
 
-- `status`：执行状态。
-- `mode`：调用模式（如 `list-models` 或 `stream-chat`）。
-- `format`：协议格式（`openai` 或 `anthropic`）。
-- `model`：本次请求使用的模型名。
-- `firstTokenMs`：从发起请求到首个可见 token 到达的耗时（毫秒）。
-- `durationMs`：整次请求的总耗时（毫秒）。
-- `responseText`：拼接得到的完整响应文本。
+| Parameter | Applies to | Default | Description |
+|-----------|-----------|---------|-------------|
+| `--message` | stream scripts | `你好` | Custom test message |
+| `--timeout-ms` | stream scripts | `60000` | Request timeout in ms |
+| `--max-tokens` | Anthropic stream | `64` | Max tokens to generate |
+| `--anthropic-version` | Anthropic stream | `2023-06-01` | API version date |
+| `--homepage` | cc-switch | — | Provider homepage URL |
+| `--enabled` | cc-switch | `true` | Enable provider after import |
+| `--open` | cc-switch | — | Open the `ccswitch://` deep link |
 
-失败时，JSON 中额外包含：
+## Output Format
 
-- `error`：错误信息字符串，描述失败原因。
+On success, stdout is a JSON object with the following fields:
 
-## 运行要求
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `string` | Execution status |
+| `mode` | `string` | Call mode (e.g. `list-models`, `stream-chat`) |
+| `format` | `string` | Protocol format (`openai` or `anthropic`) |
+| `model` | `string` | The model ID used in the request |
+| `firstTokenMs` | `number` | Time to first visible token (ms) |
+| `durationMs` | `number` | Total request duration (ms) |
+| `responseText` | `string` | Complete concatenated response text |
+| `importUrl` | `string` | Sanitized cc-switch deep link (display only) |
+| `opened` | `boolean` | Whether the cc-switch deep link was opened |
 
-- Node.js ≥ 18。
-- 脚本依赖全局 `fetch` 与 `AbortController`，仅使用 Node 内置模块，无第三方依赖。
+On failure, the JSON additionally includes:
 
-## 注意
+| Field | Type | Description |
+|-------|------|-------------|
+| `error` | `string` | Error message describing the cause |
 
-- 不要把 `apiKey` 写入仓库或提交到任何公开位置。
-- 脚本不会持久化 `apiKey`，每次调用都需要通过命令行参数显式传入。
+## Requirements
+
+- Node.js ≥ 18
+- Zero dependencies — uses only Node.js built-in modules (`fetch`, `AbortController`)
+
+## Security
+
+- Never commit `apiKey` to the repository or any public location.
+- Scripts never persist `apiKey`; it must be passed explicitly via CLI argument on every invocation.
+- The cc-switch import script never outputs a full deep link containing the real `apiKey`.
+
+## License
+
+MIT
