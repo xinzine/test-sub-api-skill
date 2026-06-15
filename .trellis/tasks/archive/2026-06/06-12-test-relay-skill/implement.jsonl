@@ -1,0 +1,3 @@
+{"file": ".trellis/tasks/06-12-test-relay-skill/prd.md", "reason": "Authoritative requirements, decisions and acceptance criteria for the skill, scripts, JSON contract and timeout behavior."}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Four scripts share SSE parsing, timing and JSON output via scripts/lib/*; this guide reminds implementer to extract shared utilities rather than copy."}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Skill SKILL.md and CLI scripts form an interaction layer + tool layer boundary - JSON contract and exit codes must stay consistent across both."}

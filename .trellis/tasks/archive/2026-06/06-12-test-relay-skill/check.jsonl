@@ -1,0 +1,3 @@
+{"file": ".trellis/tasks/06-12-test-relay-skill/prd.md", "reason": "Check acceptance criteria, JSON field names, timeout default, exit-code-on-failure and out-of-scope items are honored."}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Verify that SSE parsing, timing and JSON output logic are not duplicated across the four entry scripts."}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Verify the SKILL.md interaction layer and CLI tool layer agree on the JSON contract and error semantics across both protocols."}
