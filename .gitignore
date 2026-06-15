@@ -8,6 +8,11 @@ Thumbs.db
 .claude/
 .codex/
 .idea/
-.trellis/
+# Track Trellis tasks/spec/workspace; ignore only its local-only subpaths.
+.trellis/.backup-*
+.trellis/worktrees/
+.trellis/.template-hashes.json
+.trellis/.runtime/
+.trellis/.cache/
 package.json
 package-lock.json
