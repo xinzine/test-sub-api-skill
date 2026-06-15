@@ -25,15 +25,20 @@ Ask one question at a time. Do not skip steps.
 1. `baseUrl` — the relay's base URL (e.g. `https://api.example.com/v1` for
    OpenAI-style, or `https://api.example.com` for Anthropic-style).
 2. `apiKey` — the API key the user wants to test.
-3. `format` — either `openai` or `anthropic`. Apply the following default
-   detection **before** asking:
-   - If `baseUrl` ends with `/v1` (case-sensitive, ignoring a trailing slash),
-     propose `openai` as the default.
-   - Otherwise propose `anthropic` as the default.
-   - Always show the proposed default and let the user confirm or override.
-   - If the user chooses `openai` while `baseUrl` does not end with `/v1`,
-     accept the choice and try the provided URL first. Do not add `/v1`
-     automatically before the first request.
+3. `format` — automatically detected and tested with fallback:
+   - **Primary detection rule:**
+     - If `baseUrl` ends with `/v1` (case-sensitive, ignoring trailing slash),
+       use `openai` format first.
+     - Otherwise, use `anthropic` format first.
+   - **Automatic fallback:**
+     - If the primary format test fails with a clear API format error (e.g.,
+       "Invalid JSON response", HTML response, 404/400 status), automatically
+       retry with the alternate format.
+     - If the alternate format also fails, report both errors to the user.
+   - **No user confirmation required** for format selection.
+   - **Silent format switching:** When falling back to the alternate format,
+     briefly mention it in the response (e.g., "ℹ️ OpenAI 格式测试失败，已自动
+     切换到 Anthropic 格式").
 4. `model` — optional. If the user already provided a model ID, remember it
    and validate it after listing models instead of asking again immediately.
 
@@ -98,7 +103,16 @@ and `--anthropic-version <date>` (default: `2023-06-01`).
 
 ## Step 3: Report a Structured Result
 
+**IMPORTANT: Language Adaptation**
+- Detect the user's conversation language from their messages.
+- If the user communicates in Chinese (中文), render the result in Chinese.
+- If the user communicates in English, render the result in English.
+- For other languages, default to English.
+- Do NOT mix languages in the same response.
+
 Render the final result as a structured summary using exactly these fields:
+
+### English Format
 
 | Display       | JSON field      | Condition                                        |
 |---------------|-----------------|--------------------------------------------------|
@@ -110,7 +124,49 @@ Render the final result as a structured summary using exactly these fields:
 | Response      | `responseText`  | Only when `status === "success"` and non-empty   |
 | Error         | `error`         | Only when `status === "failure"`                 |
 
-Format milliseconds as seconds with one decimal (e.g. `3800` → `3.8s`).
+Example:
+```
+✅ API relay service is available, streaming response works correctly.
+
+- **Status**: success
+- **Mode**: stream
+- **Model**: gpt-5.5
+- **First Token**: 7.5s
+- **Duration**: 8.1s
+- **Response**: Hello! How can I help you?
+```
+
+### Chinese Format (中文格式)
+
+| 显示字段 | JSON 字段 | 条件 |
+|---------|----------|------|
+| 状态 | `status` | 总是显示 |
+| 模式 | `mode` | 总是显示 |
+| 模型 | `model` | 总是显示 |
+| 首字延迟 | `firstTokenMs` | 仅成功时 |
+| 总耗时 | `durationMs` | 仅成功时 |
+| 响应内容 | `responseText` | 仅当 `status === "success"` 且非空时 |
+| 错误信息 | `error` | 仅失败时 |
+
+示例：
+```
+✅ API 中继服务可用，流式响应正常
+
+- **状态**: 成功
+- **模式**: 流式
+- **模型**: gpt-5.5
+- **首字延迟**: 7.5秒
+- **总耗时**: 8.1秒
+- **响应内容**: 你好！有什么我可以帮你的吗？
+```
+
+**Language Detection Rules:**
+1. Scan the user's messages in the current conversation.
+2. If any message contains Chinese characters (U+4E00 to U+9FFF), use Chinese format.
+3. Otherwise, use English format.
+4. Do NOT mix languages in the same response.
+
+Format milliseconds as seconds with one decimal (e.g. `3800` → `3.8s` or `3.8秒`).
 
 ## Error Handling Rules
 

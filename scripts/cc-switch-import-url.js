@@ -105,7 +105,9 @@ function openImportUrl(importUrl) {
   let args;
   if (process.platform === 'win32') {
     command = 'powershell.exe';
-    args = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', 'Start-Process -FilePath $args[0]', importUrl];
+    // 修复：使用单引号包裹 URL，避免 & 符号被解析为命令操作符
+    const escapedUrl = importUrl.replace(/'/g, "''");
+    args = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', `Start-Process '${escapedUrl}'`];
   } else if (process.platform === 'darwin') {
     command = 'open';
     args = [importUrl];
